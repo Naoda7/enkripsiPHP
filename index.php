@@ -1,46 +1,23 @@
-<?php
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $code = $_POST['code'];
-    $key = $_POST['key'];
-    $iv = $_POST['iv'];
-
-    // Ensure the key and IV are of the correct length for AES-256-CBC
-    if (strlen($key) !== 32 || strlen($iv) !== 16) {
-        die('Key must be 32 characters and IV must be 16 characters.');
-    }
-
-    // Encrypt the code
-    $encryptedCode = openssl_encrypt($code, 'aes-256-cbc', $key, 0, $iv);
-
-    if ($encryptedCode === false) {
-        die('Encryption failed.');
-    }
-
-    // Encode the encrypted code with Base64
-    $encryptedCodeBase64 = base64_encode($encryptedCode);
-
-    // Save the key and IV to a separate file
-    $keyFileContent = "<?php\n" .
-                      'return [' . "\n" .
-                      '    "key" => "' . $key . '",' . "\n" .
-                      '    "iv" => "' . $iv . '",' . "\n" .
-                      '];';
-
-    file_put_contents('key.php', $keyFileContent);
-
-    // Prepare the PHP code to be executed
-    $executableCode = "<?php\n" .
-                      '$keyData = include("key.php");' . "\n" .
-                      '$key = $keyData["key"];' . "\n" .
-                      '$iv = $keyData["iv"];' . "\n" .
-                      '$encryptedCodeBase64 = "' . $encryptedCodeBase64 . '";' . "\n" .
-                      '$encryptedCode = base64_decode($encryptedCodeBase64);' . "\n" .
-                      '$decryptedCode = openssl_decrypt($encryptedCode, "aes-256-cbc", $key, 0, $iv);' . "\n" .
-                      'eval("?>".$decryptedCode);' . "\n" .
-                      "?>";
-
-    // Output the executable code
-    echo '<h2>Encrypted PHP Code</h2>';
-    echo '<textarea rows="20" cols="80">' . htmlspecialchars($executableCode) . '</textarea>';
-}
-?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Code Encryptor</title>
+</head>
+<body>
+    <h1>PHP Code Encryptor</h1>
+    <form action="encrypt.php" method="post">
+        <label for="code">PHP Code:</label><br>
+        <textarea id="code" name="code" rows="10" cols="50" required></textarea><br><br>
+        
+        <label for="key">Encryption Key (32 characters):</label><br>
+        <input type="text" id="key" name="key" maxlength="32" required><br><br>
+        
+        <label for="iv">Initialization Vector (IV) (16 characters):</label><br>
+        <input type="text" id="iv" name="iv" maxlength="16" required><br><br>
+        
+        <input type="submit" value="Encrypt Code">
+    </form>
+</body>
+</html>
